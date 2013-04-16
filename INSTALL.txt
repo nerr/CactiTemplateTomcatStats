@@ -1,0 +1,77 @@
+TomcatStats v0.1(PHP) INSTALL GUIDE
+
+Based TomcatStats v0.1 Timothy Denike     tim@socializr.com
+
+By Leon Zhuang http://nerrsoft.com leon@nerrsoft.com  
+
+This is a work in progress, feel free to drop me a line.
+
+
+== Step 1 :  Enable the Tomcat manager application
+
+  A. I suggest running the Tomcat manager application on a separate port for security.
+     
+     Add the following to your server.xml file on your Tomcat servers:
+
+       <Service name="Admin">
+        <Connector port="8444" maxHttpHeaderSize="8192"
+               maxThreads="150" minSpareThreads="25" maxSpareThreads="75"
+               enableLookups="false" disableUploadTimeout="true"
+               acceptCount="100" scheme="https" secure="true"
+               clientAuth="false" sslProtocol="TLS" />
+        <Engine name="Admin" defaultHost="localhost">
+         <Realm className="org.apache.catalina.realm.UserDatabaseRealm"
+               resourceName="UserDatabase"/>
+         <Host name="localhost" appBase="server/webapps"
+               unpackWARs="false" autoDeploy="false"
+               xmlValidation="false" xmlNamespaceAware="false">
+          <Valve className="org.apache.catalina.valves.FastCommonAccessLogValve"
+               directory="logs"  prefix="admin_access_log." suffix=".txt"
+               pattern="combined" resolveHosts="false"
+               fileDateFormat="yyy-MM-dd"/>
+          <Context path="/manager" cookies="false" 
+               docBase="server/webapps/manager" debug="0"
+               privileged="true" reloadable="false" />
+         </Host>
+        </Engine>
+       </Service>
+  
+  B.  Add a user/password in /usr/tomcat/conf/tomcat-users.xml
+	
+	<user username="admin" password="passwords" roles="admin,manager"/>
+
+  C.  Restart Tomcat and test.  
+
+	GET http://admin:passwords@app1:8444/manager/status?XML=true
+
+	You should see copious XML output. 
+
+
+== Step 2 :  Install the tomcatstats.pl script
+ 
+  A. Copy tomcatstats.php to <cacti_root>/scripts (or wherever your Cacti installation lives.)
+  B. Make sure you have SimpleXML installed.  (phpinfo())
+  C. Test the script.  You should see output like this:
+ 
+      Example: php tomcatstats.php app1:8444 admin passwords
+
+        jvm_memory_free:205377864 jvm_memory_max:954466304 jvm_memory_total:301203456
+        connector_max_time:1015226 connector_error_count:2243 connector_bytes_sent:1599068002
+        connector_processing_time:9931650 connector_request_count:89363
+        connector_bytes_received:7268740 connector_current_thread_count:4
+        connector_min_spare_threads:0 connector_max_threads:150
+        connector_max_spare_threads:0 connector_current_threads_busy:1
+
+== Step 3:  Import the templates into Cacti
+
+  A.  Import the cacti_host_template_tomcat_server.xml into Cacti
+  B.  If you used a password other than "passwords" or need to monitor a different connector:
+        Modify "Data Input Methods:Tomcat Status:Input String" as needed.
+
+== Step 4:  Create graphs
+
+  A.  Create a host using the Tomcat Server Host template.  The SNMP settings shouldn't matter.
+  B.  Create all 4 graphs for the host.  Make sure the Data source is properly selected.
+  C.  Add your server to a graph tree for viewing.
+
+Enjoy!
